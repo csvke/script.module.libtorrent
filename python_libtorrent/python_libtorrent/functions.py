@@ -35,7 +35,7 @@ __icon__=os.path.join(xbmc.translatePath('special://home'), 'addons',
                                    'script.module.libtorrent', 'icon.png')
 __language__ = __settings__.getLocalizedString
 
-from platform_pulsar import get_platform, get_libname
+from python_libtorrent.platform_pulsar import get_platform, get_libname
 
 def log(msg):
     try:
@@ -52,7 +52,7 @@ class LibraryManager():
     def __init__(self, dest_path, platform):
         self.dest_path = dest_path
         self.platform = platform
-        self.root=os.path.dirname(__file__)
+        self.root=os.path.dirname(os.path.dirname(__file__))
 
     def check_exist(self):
         for libname in get_libname(self.platform):

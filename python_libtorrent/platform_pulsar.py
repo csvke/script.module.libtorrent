@@ -27,12 +27,29 @@ import sys
 import os
 try:
     import xbmc, xbmcaddon
+    __settings__ = xbmcaddon.Addon(id='script.module.libtorrent')
+    __version__ = __settings__.getAddonInfo('version')
+    __plugin__ = __settings__.getAddonInfo('name') + " v." + __version__
 except:
+    __plugin__ = 'script.module.libtorrent'
     pass
+
+def log(msg):
+    try:
+        xbmc.log("### [%s]: %s" % (__plugin__,msg,), level=xbmc.LOGNOTICE )
+    except UnicodeEncodeError:
+        xbmc.log("### [%s]: %s" % (__plugin__,msg.encode("utf-8", "ignore"),), level=xbmc.LOGNOTICE )
+    except:
+        try:
+            xbmc.log("### [%s]: %s" % (__plugin__,'ERROR LOG',), level=xbmc.LOGNOTICE )
+        except:
+            print msg
 
 def get_libname(platform):
     libname=[]
-    if platform['system'] in ['darwin', 'linux_x86', 'linux_arm', 'linux_armv6', 'linux_armv7', 'linux_x86_64', 'ios_arm']:
+    if platform['system'] in ['darwin', 'linux_x86', 'linux_arm', 'linux_armv6',
+                              'linux_armv7', 'linux_x86_64', 'ios_arm',
+                              'linux_mipsel_ucs2', 'linux_mipsel_ucs4']:
         libname=['libtorrent.so']
     elif platform['system'] == 'windows':
         libname=['libtorrent.pyd']
@@ -48,7 +65,7 @@ def get_platform():
 
     if __settings__.getSetting('custom_system').lower() == "true":
         system = int(__settings__.getSetting('set_system'))
-        print 'USE CUSTOM SYSTEM: '+__language__(1100+system)
+        log('USE CUSTOM SYSTEM: '+__language__(1100+system))
 
         ret={}
 
@@ -82,7 +99,12 @@ def get_platform():
         elif system==9:
             ret["os"] = "ios"
             ret["arch"] = "arm"
-
+        elif system==10:
+            ret["os"] = "linux"
+            ret["arch"] = "mipsel_ucs2"
+        elif system==11:
+            ret["os"] = "linux"
+            ret["arch"] = "mipsel_ucs4"
     else:
 
         ret = {
@@ -102,6 +124,11 @@ def get_platform():
                     ret["arch"] = "armv6"
                 else:
                     ret["arch"] = "arm"
+            elif "mips" in uname:
+                if sys.maxunicode > 65536:
+                    ret["arch"] = 'mipsel_ucs4'
+                else:
+                    ret["arch"] = 'mipsel_ucs2'
         elif xbmc.getCondVisibility("system.platform.windows"):
             ret["os"] = "windows"
         elif xbmc.getCondVisibility("system.platform.osx"):
@@ -129,7 +156,7 @@ def get_system(ret):
         ret["system"] = 'linux_x86'
         ret["message"] = ['Linux has static compiled python-libtorrent included but it didn\'t work.',
                           'You should install it by "sudo apt-get install python-libtorrent"']
-    elif ret["os"] == "linux" and "arm" in ret["arch"]:
+    elif ret["os"] == "linux" and ("arm" or "mips" in ret["arch"]):
         ret["system"] = 'linux_'+ret["arch"]
         ret["message"] = ['As far as I know you can compile python-libtorrent for ARMv6-7.',
                           'You should search for "OneEvil\'s OpenELEC libtorrent" or use Ace Stream.']
